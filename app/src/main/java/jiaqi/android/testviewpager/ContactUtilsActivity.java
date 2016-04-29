@@ -1,8 +1,13 @@
 package jiaqi.android.testviewpager;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputFilter;
@@ -24,6 +29,10 @@ import jiaqi.android.testviewpager.utils.ContactUtils;
 public class ContactUtilsActivity extends AppCompatActivity {
 
     private static final String TAG = ContactUtilsActivity.class.getSimpleName();
+    private static final int REQ_CODE_READ_CONTACTS = 0;
+    private static final int REQ_CODE_WRITE_CONTACTS = 1;
+    private static final int REQ_CODE_READ_WRITE_CONTACTS = 2;
+
 
     private Button btnReloadMaleNames;
     private EditText etNumContacts;
@@ -31,6 +40,7 @@ public class ContactUtilsActivity extends AppCompatActivity {
     private Button btnDelContacts;
     private ImageView ivContactPhoto;
     private Button btnLoadSampleContactPhoto;
+    private Button btnContactDetail;
 
     private List<Button> buttons;
 
@@ -58,16 +68,55 @@ public class ContactUtilsActivity extends AppCompatActivity {
         btnDelContacts = (Button) findViewById(R.id.btn_del_all_contacts);
         btnDelContacts.setOnClickListener(listener);
 
-        ivContactPhoto = (ImageView) findViewById(R.id.iv_contact_photo);
+        ivContactPhoto = (ImageView) findViewById(R.id.iv_contact_sample_photo);
 
         btnLoadSampleContactPhoto = (Button) findViewById(R.id.btn_load_sample_contact_photo);
         btnLoadSampleContactPhoto.setOnClickListener(listener);
+
+        btnContactDetail = (Button) findViewById(R.id.btn_contact_detail);
+        btnContactDetail.setOnClickListener(listener);
 
         buttons = new ArrayList<>();
         buttons.add(btnAddContacts);
         buttons.add(btnDelContacts);
         buttons.add(btnLoadSampleContactPhoto);
         buttons.add(btnReloadMaleNames);
+
+        //check permissions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_DENIED
+                    || checkSelfPermission(Manifest.permission.WRITE_CONTACTS) == PackageManager.PERMISSION_DENIED)
+            {
+                disableAllButtons();
+                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, REQ_CODE_READ_WRITE_CONTACTS);
+            }
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case REQ_CODE_READ_WRITE_CONTACTS:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    enableButtons();
+                }
+        }
+    }
+
+    private void disableAllButtons() {
+        for (Button button : buttons) {
+            button.setEnabled(false);
+        }
+    }
+
+    private void enableButtons() {
+        for (Button button : buttons) {
+            if (button.getId() != R.id.btn_add_contacts) {
+                button.setEnabled(true);
+            }
+        }
     }
 
     class Listener implements View.OnClickListener {
@@ -90,6 +139,12 @@ public class ContactUtilsActivity extends AppCompatActivity {
                     break;
                 case R.id.btn_load_sample_contact_photo:
                     contactUtils.loadSampleContactPhoto(ivContactPhoto);
+                    break;
+                case R.id.btn_contact_detail:
+                    Intent intent = getIntent();
+                    intent.setClass(ContactUtilsActivity.this, ContactDetailActivity.class);
+                    startActivity(intent);
+                    break;
                 default:
                     break;
             }

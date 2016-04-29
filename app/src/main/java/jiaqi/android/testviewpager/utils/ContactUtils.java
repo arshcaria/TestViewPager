@@ -3,48 +3,33 @@ package jiaqi.android.testviewpager.utils;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.provider.ContactsContract;
-
 import android.provider.ContactsContract.Data;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
-
-import static jiaqi.android.testviewpager.utils.Configurations.DEBUG;
 
 public class ContactUtils {
     private static final String TAG = ContactUtils.class.getSimpleName();
 
     private static ContactUtils instance;
-    private HashSet<String> maleNames;
     private ArrayList<Contact> contacts;
-
-    Context context;
-
+    private Context context;
 
     private ContactUtils(Context context) {
         this.context = context;
@@ -59,52 +44,16 @@ public class ContactUtils {
         }
     }
 
+    public ArrayList<Contact> getContacts() {
+        return contacts;
+    }
+
     public boolean isContactsNull() {
         return (contacts == null);
     }
 
-    private HashSet<String> loadMaleNames() {
-        return loadMaleNames(false);
-    }
-
-    private HashSet<String> loadMaleNames(boolean forceReload) {
-        if (forceReload || maleNames == null) {
-            return reloadMalesNames();
-        }
-        // maleNames is not null do not reload
-        return maleNames;
-    }
-
-    public HashSet<String> reloadMalesNames() {
-        maleNames = new HashSet<>();
-
-        try {
-            BufferedReader reader = getAssetBufferedReader("MaleNames.txt");
-
-            String name;
-
-            while ((name = reader.readLine()) != null) {
-                maleNames.add(name);
-            }
-
-            if (DEBUG) {
-                for (String n : maleNames) {
-                    Log.d(TAG, n);
-                }
-                Log.d(TAG, maleNames.size() + " contacts have been loaded");
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return maleNames;
-    }
-
     public void prepareContactsFromFile() {
-        if (maleNames == null) {
-            loadMaleNames();
-        }
+
         ArrayList<Contact> contacts = new ArrayList<>();
 
         try {
@@ -128,7 +77,7 @@ public class ContactUtils {
             String[] photoNames = assetManager.list("avatars");
 
             for (int i = 0; i < contacts.size(); i++) {
-                InputStream is = assetManager.open("avatars/" + photoNames[i % photoNames.length]);
+                InputStream is = assetManager.open("avatars/" + photoNames[new Random().nextInt(70) % photoNames.length]);
                 Bitmap photoBitmap = BitmapFactory.decodeStream(is);
                 contacts.get(i).setPhoto(photoBitmap);
             }
@@ -165,7 +114,7 @@ public class ContactUtils {
     public void addContacts(int num) {
         int counter = 0;
 
-        for (Contact contact: contacts) {
+        for (Contact contact : contacts) {
             insertContact(contact);
             if ((counter++) > num) {
                 break;
